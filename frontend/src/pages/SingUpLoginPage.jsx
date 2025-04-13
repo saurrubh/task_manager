@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useDarkMode } from "../context/toggleTheme";
 
-const LoginPage = () => {
+const SignUpLoginPage = () => {
   const API_BASE_URL = import.meta.env.VITE_REACT_APP_API_BASE_URL;
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -230,4 +230,4 @@ const styles = {
   },
 };
 
-export default LoginPage;
+export default SignUpLoginPage;
