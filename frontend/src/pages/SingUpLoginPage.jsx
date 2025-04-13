@@ -10,6 +10,7 @@ const LoginPage = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSignup, setIsSignup] = useState(false); // Toggle between login and signup
   const { darkMode, toggleDarkMode } = useDarkMode();
 
   const navigate = useNavigate();
@@ -38,13 +39,54 @@ const LoginPage = () => {
 
       const token = response.data.access_token;
       localStorage.setItem("token", token);
-      setSuccess(" Login successful! Redirecting...");
+      setSuccess("Login successful! Redirecting...");
       setTimeout(() => navigate("/tasks"), 1000);
     } catch (err) {
-      setError(" Invalid username or password");
+      setError(err.response?.data?.detail || "Invalid username or password");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+
+    if (!username.trim() || !password.trim()) {
+      setError("Please fill in both fields.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/signup`,
+        { username, password },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      setSuccess("Signup successful! Please log in.");
+      setUsername("");
+      setPassword("");
+      setIsSignup(false); // Switch back to login form
+    } catch (err) {
+      setError(err.response?.data?.detail || "Signup failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const toggleForm = () => {
+    setIsSignup(!isSignup);
+    setError("");
+    setSuccess("");
+    setUsername("");
+    setPassword("");
   };
 
   return (
@@ -69,9 +111,11 @@ const LoginPage = () => {
             {darkMode ? "🌞" : "🌙"}
           </button>
         </div>
-        <h2 style={{ marginBottom: "25px", fontSize: "26px", fontWeight: "600" }}>🔐 Welcome Back</h2>
-  
-        <form onSubmit={handleLogin} style={styles.form}>
+        <h2 style={{ marginBottom: "25px", fontSize: "26px", fontWeight: "600" }}>
+          {isSignup ? "📝 Create Account" : "🔐 Welcome Back"}
+        </h2>
+
+        <form onSubmit={isSignup ? handleSignup : handleLogin} style={styles.form}>
           <input
             type="text"
             placeholder="Username"
@@ -87,18 +131,32 @@ const LoginPage = () => {
             onChange={(e) => setPassword(e.target.value)}
             style={styles.input}
           />
-  
+
           <button type="submit" style={styles.button} disabled={isLoading}>
-            {isLoading ? "Logging in..." : "Login"}
+            {isLoading ? (isSignup ? "Signing up..." : "Logging in...") : (isSignup ? "Signup" : "Login")}
           </button>
-  
+
           {error && <p style={styles.error}>{error}</p>}
           {success && <p style={styles.success}>{success}</p>}
         </form>
+
+        <p style={{ marginTop: "15px", fontSize: "14px" }}>
+          {isSignup ? "Already have an account?" : "Don't have an account?"}
+          <button
+            onClick={toggleForm}
+            style={{
+              ...styles.toggle,
+              marginLeft: "5px",
+              textDecoration: "underline",
+              fontSize: "14px",
+            }}
+          >
+            {isSignup ? "Login" : "Signup"}
+          </button>
+        </p>
       </div>
     </div>
   );
-  
 };
 
 const styles = {
@@ -171,6 +229,5 @@ const styles = {
     transition: "color 0.3s ease",
   },
 };
-
 
 export default LoginPage;
