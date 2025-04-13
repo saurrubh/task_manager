@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
-from auth import get_current_user
-from models import Task, TaskCreate
-from services.taskservices import (
+from backend.auth import get_current_user
+from backend.models import Task, TaskCreate
+from backend.services.taskservices import (
     get_all_tasks, create_task, complete_task_by_id, delete_task_by_id
 )
 

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-import auth as auth
-from models import UserCreate
+import backend.auth as auth
+from backend.models import UserCreate
 
 router = APIRouter(tags=["auth"])
 
@@ -19,4 +19,5 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
 @router.post("/signup")
 def signup(user_data: UserCreate):
     user = auth.create_user(user_data.username, user_data.password)
+    print("fsdf",user)
     return {"message": "User created successfully", "username": user["username"]}
