@@ -7,27 +7,27 @@ const TasksPage = () => {
   const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(null);
+  const [isAdding, setIsAdding] = useState(false);
+  const [deletingTaskId, setDeletingTaskId] = useState(null);
+
   const { darkMode, toggleDarkMode } = useDarkMode();
   const token = localStorage.getItem("token");
   const inputRef = useRef();
 
   useEffect(() => {
-    
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [tasks, selectedIndex]);
 
-  useEffect
-
   useEffect(() => {
     localStorage.setItem("darkMode", darkMode);
   }, [darkMode]);
+
   useEffect(() => {
-fetchTasks()
+    fetchTasks();
   }, []);
 
   const fetchTasks = async () => {
-
     const response = await axios.get(`${API_BASE_URL}/tasks/`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -36,32 +36,45 @@ fetchTasks()
 
   const handleAdd = async () => {
     if (!newTask.trim()) return;
-    const response = await axios.post(
-      `${API_BASE_URL}/tasks/`,
-      { title: newTask },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    setTasks([...tasks, response.data]);
-    setNewTask("");
+    setIsAdding(true);
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/tasks/`,
+        { title: newTask },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setTasks([...tasks, response.data]);
+      setNewTask("");
+    } catch (error) {
+      console.error("Error adding task", error);
+    } finally {
+      setIsAdding(false);
+    }
   };
 
   const handleComplete = async (id) => {
     await axios.patch(
       `${API_BASE_URL}/tasks/${id}`,
       {},
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
+      { headers: { Authorization: `Bearer ${token}` } }
     );
     fetchTasks();
   };
 
   const handleDelete = async (id) => {
-    await axios.delete(`${API_BASE_URL}/tasks/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    fetchTasks();
+    setDeletingTaskId(id);
+    try {
+      await axios.delete(`${API_BASE_URL}/tasks/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchTasks();
+    } catch (error) {
+      console.error("Error deleting task", error);
+    } finally {
+      setDeletingTaskId(null);
+    }
   };
+  
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -130,7 +143,37 @@ fetchTasks()
         transition: "all 0.3s ease-in-out",
       }}
     >
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        .spinner {
+          border: 3px solid rgba(255, 255, 255, 0.3);
+          border-top: 3px solid white;
+          border-radius: 50%;
+          width: 16px;
+          height: 16px;
+          animation: spin 1s linear infinite;
+          display: inline-block;
+        }
+        @media (max-width: 600px) {
+          .task-container {
+            padding: 20px;
+          }
+          .task-inputs {
+            flex-direction: column;
+          }
+          .task-inputs input,
+          .task-inputs button {
+            width: 100%;
+            margin-bottom: 10px;
+          }
+        }
+      `}</style>
+
       <div
+        className="task-container"
         style={{
           maxWidth: "700px",
           margin: "0 auto",
@@ -158,8 +201,8 @@ fetchTasks()
             {darkMode ? "🌞" : "🌙"}
           </button>
         </div>
-  
-        <div style={{ display: "flex", gap: "10px", marginBottom: "25px" }}>
+
+        <div className="task-inputs" style={{ display: "flex", gap: "10px", marginBottom: "25px", flexWrap: "wrap" }}>
           <input
             ref={inputRef}
             type="text"
@@ -175,22 +218,24 @@ fetchTasks()
               backgroundColor: darkMode ? "#2b2b2b" : "#fafafa",
               color: themeStyles.color,
               transition: "border-color 0.3s",
+              minWidth: "200px",
             }}
           />
           <button
             onClick={handleAdd}
+            disabled={isAdding}
             style={{
               padding: "14px 20px",
-              backgroundColor: "#4CAF50",
+              backgroundColor: isAdding ? "#888" : "#4CAF50",
               color: "#fff",
               fontWeight: "500",
               border: "none",
               borderRadius: "8px",
-              cursor: "pointer",
-              transition: "background-color 0.3s ease",
+              cursor: isAdding ? "not-allowed" : "pointer",
+              minWidth: "50px",
             }}
           >
-            ➕
+            {isAdding ? <span className="spinner" /> : "➕"}
           </button>
           <button
             onClick={handleLogout}
@@ -202,20 +247,18 @@ fetchTasks()
               border: "none",
               borderRadius: "8px",
               cursor: "pointer",
-              transition: "background-color 0.3s ease",
             }}
           >
-            🔓
+          Logout
           </button>
         </div>
-  
+
         <ul style={{ listStyle: "none", padding: 0, marginTop: "10px" }}>
           {tasks.map((task, index) => (
             <li
               key={task.id}
               style={{
-                backgroundColor:
-                  selectedIndex === index ? themeStyles.selected : themeStyles.taskBackground,
+                backgroundColor: selectedIndex === index ? themeStyles.selected : themeStyles.taskBackground,
                 padding: "18px 22px",
                 marginBottom: "12px",
                 borderRadius: "10px",
@@ -224,8 +267,7 @@ fetchTasks()
                 justifyContent: "space-between",
                 boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
                 transition: "background 0.3s ease",
-                outline:
-                  selectedIndex === index ? `2px solid ${themeStyles.outline}` : "none",
+                outline: selectedIndex === index ? `2px solid ${themeStyles.outline}` : "none",
               }}
             >
               <span
@@ -234,7 +276,6 @@ fetchTasks()
                   color: task.completed ? "#aaa" : themeStyles.color,
                   fontSize: "16px",
                   flex: 1,
-                  transition: "color 0.3s ease",
                 }}
               >
                 {task.title}
@@ -251,35 +292,35 @@ fetchTasks()
                   fontSize: "14px",
                   cursor: "pointer",
                   marginLeft: "12px",
-                  transition: "background-color 0.3s",
                 }}
               >
                 ✔
               </button>
               <button
-                onClick={() => handleDelete(task.id)}
-                title="Delete Task"
-                style={{
-                  backgroundColor: "#e91e63",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "6px",
-                  padding: "8px 12px",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                  marginLeft: "8px",
-                  transition: "background-color 0.3s",
-                }}
-              >
-                🗑
-              </button>
+  onClick={() => handleDelete(task.id)}
+  title="Delete Task"
+  disabled={deletingTaskId === task.id}
+  style={{
+    backgroundColor: "#e91e63",
+    color: "#fff",
+    border: "none",
+    borderRadius: "6px",
+    padding: "8px 12px",
+    fontSize: "14px",
+    cursor: deletingTaskId === task.id ? "not-allowed" : "pointer",
+    marginLeft: "8px",
+  }}
+>
+  {deletingTaskId === task.id ? <span style={{
+    height:"10px",width:'10px'
+  }} className="spinner" /> : "🗑"}
+</button>
             </li>
           ))}
         </ul>
       </div>
     </div>
   );
-  
 };
 
 export default TasksPage;
