@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useDarkMode } from "../context/toggleTheme";
 
 const LoginPage = () => {
+  const API_BASE_URL = import.meta.env.VITE_REACT_APP_API_BASE_URL;
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -26,7 +27,7 @@ const LoginPage = () => {
     setIsLoading(true);
     try {
       const response = await axios.post(
-        "http://localhost:5000/login",
+        `${API_BASE_URL}/login`,
         new URLSearchParams({ username, password }),
         {
           headers: {

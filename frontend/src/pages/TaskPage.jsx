@@ -3,6 +3,7 @@ import axios from "axios";
 import { useDarkMode } from "../context/toggleTheme";
 
 const TasksPage = () => {
+  const API_BASE_URL = import.meta.env.VITE_REACT_APP_API_BASE_URL;
   const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(null);
@@ -27,7 +28,7 @@ fetchTasks()
 
   const fetchTasks = async () => {
 
-    const response = await axios.get("http://localhost:5000/tasks/", {
+    const response = await axios.get(`${API_BASE_URL}/tasks/`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     setTasks(response.data);
@@ -36,7 +37,7 @@ fetchTasks()
   const handleAdd = async () => {
     if (!newTask.trim()) return;
     const response = await axios.post(
-      "http://localhost:5000/tasks/",
+      `${API_BASE_URL}/tasks/`,
       { title: newTask },
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -46,7 +47,7 @@ fetchTasks()
 
   const handleComplete = async (id) => {
     await axios.patch(
-      `http://localhost:5000/tasks/${id}`,
+      `${API_BASE_URL}/tasks/${id}`,
       {},
       {
         headers: { Authorization: `Bearer ${token}` },
@@ -56,7 +57,7 @@ fetchTasks()
   };
 
   const handleDelete = async (id) => {
-    await axios.delete(`http://localhost:5000/tasks/${id}`, {
+    await axios.delete(`${API_BASE_URL}/tasks/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     fetchTasks();
