@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
-from backend.fileio import read_users_from_file, write_users_to_file
+from fileio import read_users_from_file, write_users_to_file
 
 SECRET_KEY = "SQ1JT9LPB2JYWZTYU32JCPQ39HDHK4KHFC5"
 ALGORITHM = "HS256"
